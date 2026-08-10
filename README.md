@@ -273,6 +273,45 @@ For deeper documentation on each part, see:
 
 ---
 
+## 🌐 Day 5: External Data Lookup & Tool Calling
+
+### Overview
+On Day 5, **Mita** (the Home Fresh Kirana Voice Assistant) was upgraded with real-time data lookup capabilities using Python function calling (`@function_tool`). The agent can now dynamically query stock availability, pricing, and handle server connectivity issues gracefully.
+
+---
+
+### 📦 Dataset & Tool Implementation
+* **Selected Tool:** `check_kirana_inventory` (Catalogue & Stock Lookup for Local Commerce)
+* **Dataset Type:** **Hand-built / Local Mock Dataset (`INVENTORY_DB`)**
+  > *Note on Data Source:* Because local Kirana stores do not offer public, standardized live stock APIs, a local structured dataset in Python is used to simulate a live store inventory database containing items, prices per unit, and stock statuses.
+
+---
+
+### 🛠️ Key Capabilities
+
+#### 1. Dynamic Function Calling
+The LLM uses strict tool descriptions to decide when to call the inventory function. When a user asks for item prices or stock status (e.g., *"Mita, dim er daam koto?"*), Gemini triggers the `check_kirana_inventory` tool autonomously.
+
+#### 2. Data Freshness & Timestamps
+To ensure transparency, every lookup response automatically appends the current date timestamp. The prompt instructs Mita to explicitly state data freshness (e.g., *"According to today's update..."* or *"আজকের আপডেট অনুযায়ী..."*).
+
+#### 3. Graceful Failure Path (Handling 503 Errors)
+To prevent the agent from freezing, going silent, or hallucinating prices during network or API failures:
+* The tool includes a `simulate_failure` parameter to test offline states.
+* When a `503 Error` or timeout is caught, Mita falls back to a human-like Bengali apology:  
+  > *"ক্ষমা করবেন, সার্ভারে সমস্যার জন্য আমি এই মুহূর্তে স্টকের তথ্য দেখতে পাচ্ছি না।"* *(Sorry, due to a server issue I cannot access stock details right now.)*
+
+---
+
+### 🧪 Testing Instructions
+
+1. **Successful Stock Query:**
+   * **Prompt:** *"Mita, dim er daam koto?"*
+   * **Expected Result:** Mita executes `check_kirana_inventory`, retrieves the price and stock status for eggs along with today's date, and states it aloud.
+
+2. **Graceful Failure Test:**
+   * **Prompt:** *"Mita, simulate a failure and check the price of rice."*
+   * **Expected Result:** The tool returns an `ERROR 503`. Mita catches the error and speaks the programmed apology script without hallucinating fake pricing.
 ## License
 
 MIT
